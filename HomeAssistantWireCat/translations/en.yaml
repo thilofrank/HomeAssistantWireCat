@@ -1,0 +1,10 @@
+configuration:
+  interface:
+    name: Interface
+    description: WireGuard interface settings for this device
+  peer:
+    name: Peer
+    description: WireGuard peer (server/remote endpoint) settings
+  socat_tunnels:
+    name: Socat Tunnels
+    description: TCP port-forwarding tunnels via Socat (add one entry per tunnel)

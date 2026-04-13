@@ -1,0 +1,41 @@
+name: "WireGuard Gateway"
+description: "WireGuard VPN client with configurable Socat port-forwarding tunnels"
+version: "1.0.0"
+slug: "wireguard_gateway"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+startup: services
+boot: auto
+host_network: true
+privileged:
+  - NET_ADMIN
+  - SYS_MODULE
+  - NET_RAW
+kernel_modules: true
+devices:
+  - /dev/net/tun:/dev/net/tun
+options:
+  interface:
+    Address: "10.0.0.2/24"
+  peer:
+    PublicKey: ""
+    AllowedIPs: "0.0.0.0/0"
+    Endpoint: ""
+    PersistentKeepalive: 25
+  socat_tunnels: []
+schema:
+  interface:
+    Address: str
+  peer:
+    PublicKey: str
+    AllowedIPs: str
+    Endpoint: str
+    PersistentKeepalive: int
+  socat_tunnels:
+    - IncomingPort: int
+      OutgoingAddressPort: str
