@@ -1,7 +1,7 @@
-FROM lscr.io/linuxserver/wireguard:latest
+FROM alpine:latest
 
-# Add socat for port forwarding and jq for JSON config parsing
-RUN apk add --no-cache socat jq bash
+# Install WireGuard and utilities
+RUN apk add --no-cache wireguard-tools iproute2 nano socat jq bash
 
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
