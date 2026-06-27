@@ -1,0 +1,22 @@
+#!/command/with-contenv bashio
+# ==============================================================================
+# Bring up the WireGuard interface and keep it healthy. If wg0 goes down, this
+# script exits so s6 supervises a restart (the finish script tears it down
+# first). This replaces the manual monitor loop.
+# ==============================================================================
+
+bashio::log.info "Bringing up WireGuard interface wg0..."
+if ! wg-quick up wg0; then
+    bashio::log.error "wg-quick up failed — retrying shortly"
+    sleep 5
+    exit 1
+fi
+bashio::log.info "WireGuard interface wg0 is up"
+
+# Block while the interface stays healthy. Exit (-> supervised restart) if it drops.
+while wg show wg0 > /dev/null 2>&1; do
+    sleep 30
+done
+
+bashio::log.warning "wg0 interface went down — exiting for supervised restart"
+exit 1

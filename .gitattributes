@@ -1,0 +1,3 @@
+# Keep LF line endings so shell / s6 scripts work inside the Linux container,
+# even when checked out on Windows (core.autocrlf=true).
+* text=auto eol=lf

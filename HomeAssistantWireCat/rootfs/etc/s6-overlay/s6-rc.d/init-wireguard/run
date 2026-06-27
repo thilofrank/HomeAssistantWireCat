@@ -1,0 +1,63 @@
+#!/command/with-contenv bashio
+# ==============================================================================
+# Generate WireGuard keys (persisted in /data) and write /etc/wireguard/wg0.conf
+# from the add-on options. Runs once before the wireguard service starts.
+# ==============================================================================
+set -e
+
+KEYDIR="/data/wgcat"
+PRIVKEY_FILE="${KEYDIR}/privatekey"
+PUBKEY_FILE="${KEYDIR}/publickey"
+WG_CONF="/etc/wireguard/wg0.conf"
+
+mkdir -p "${KEYDIR}" /etc/wireguard
+
+# ---------------------------------------------------------------------------
+# Validate required configuration
+# ---------------------------------------------------------------------------
+if ! bashio::config.has_value 'peer.PublicKey'; then
+    bashio::exit.nok "peer.PublicKey is required but not configured"
+fi
+if ! bashio::config.has_value 'peer.Endpoint'; then
+    bashio::exit.nok "peer.Endpoint is required but not configured"
+fi
+
+ADDRESS=$(bashio::config 'interface.Address')
+PEER_PUBKEY=$(bashio::config 'peer.PublicKey')
+ALLOWED_IPS=$(bashio::config 'peer.AllowedIPs')
+ENDPOINT=$(bashio::config 'peer.Endpoint')
+KEEPALIVE=$(bashio::config 'peer.PersistentKeepalive')
+
+# ---------------------------------------------------------------------------
+# Key management — generate once, persist forever
+# ---------------------------------------------------------------------------
+if [[ ! -f "${PRIVKEY_FILE}" || ! -f "${PUBKEY_FILE}" ]]; then
+    bashio::log.info "Generating new WireGuard key pair..."
+    wg genkey | tee "${PRIVKEY_FILE}" | wg pubkey > "${PUBKEY_FILE}"
+    chmod 600 "${PRIVKEY_FILE}"
+fi
+
+PRIVKEY=$(cat "${PRIVKEY_FILE}")
+bashio::log.info "WireGuard public key: $(cat "${PUBKEY_FILE}")"
+bashio::log.info "(Add this public key as a peer on your WireGuard server)"
+
+# ---------------------------------------------------------------------------
+# Build wg0.conf
+# ---------------------------------------------------------------------------
+cat > "${WG_CONF}" <<EOF
+[Interface]
+Address = ${ADDRESS}
+PrivateKey = ${PRIVKEY}
+
+[Peer]
+PublicKey = ${PEER_PUBKEY}
+AllowedIPs = ${ALLOWED_IPS}
+Endpoint = ${ENDPOINT}
+PersistentKeepalive = ${KEEPALIVE}
+EOF
+chmod 600 "${WG_CONF}"
+bashio::log.info "wg0.conf written to ${WG_CONF}"
+
+# Load kernel module (usually built-in on HA OS)
+modprobe wireguard 2>/dev/null \
+    || bashio::log.info "wireguard module already loaded or built-in"

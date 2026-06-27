@@ -1,0 +1,17 @@
+{
+  "interface": {
+    "Address": "10.0.0.5/24"
+  },
+  "peer": {
+    "PublicKey": "0bXXxXIu16smuB29cHOxgCAYDL+l7zFtQNJ/0r2CmTw=",
+    "AllowedIPs": "10.0.0.0/24",
+    "Endpoint": "217.154.10.213:5005",
+    "PersistentKeepalive": 25
+  },
+  "socat_tunnels": [
+    {
+      "IncomingPort": 8080,
+      "OutgoingAddressPort": "192.168.0.252:8123"
+    }
+  ]
+}

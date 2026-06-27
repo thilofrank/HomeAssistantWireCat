@@ -1,0 +1,3 @@
+#!/command/with-contenv bashio
+# Tear the interface down whenever the wireguard service stops or restarts.
+wg-quick down wg0 2>/dev/null || true

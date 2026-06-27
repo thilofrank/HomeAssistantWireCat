@@ -1,0 +1,44 @@
+#!/command/with-contenv bashio
+# ==============================================================================
+# Start one socat TCP forwarder per configured tunnel. Each tunnel runs in its
+# own restart loop, so a single tunnel failing does not affect the others or
+# WireGuard. The service stays in the foreground (wait) so s6 supervises it.
+# ==============================================================================
+
+declare -a PIDS=()
+
+run_tunnel() {
+    local port="${1}" target="${2}"
+    while true; do
+        bashio::log.info "Tunnel ${port} -> ${target} starting"
+        socat "TCP-LISTEN:${port},reuseaddr,fork" "TCP:${target}" || true
+        bashio::log.warning "Tunnel ${port} exited — restarting in 2s"
+        sleep 2
+    done
+}
+
+terminate() {
+    bashio::log.info "Stopping socat tunnels..."
+    kill "${PIDS[@]}" 2>/dev/null || true
+    exit 0
+}
+trap terminate TERM INT
+
+# Read the (dynamic) list of tunnels from the add-on options
+mapfile -t TUNNELS < <(bashio::config 'socat_tunnels|keys')
+
+if [[ ${#TUNNELS[@]} -eq 0 ]]; then
+    bashio::log.info "No socat tunnels configured; idling"
+    exec sleep infinity
+fi
+
+bashio::log.info "Starting ${#TUNNELS[@]} socat tunnel(s)..."
+for tunnel in "${TUNNELS[@]}"; do
+    port=$(bashio::config "socat_tunnels[${tunnel}].IncomingPort")
+    target=$(bashio::config "socat_tunnels[${tunnel}].OutgoingAddressPort")
+    run_tunnel "${port}" "${target}" &
+    PIDS+=("$!")
+done
+
+# Stay in the foreground so s6 supervises this service
+wait
