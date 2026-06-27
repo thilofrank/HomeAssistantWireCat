@@ -1,9 +1,17 @@
-FROM alpine:latest
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:21.0.0
+FROM ${BUILD_FROM}
 
-# Install WireGuard and utilities
-RUN apk add --no-cache wireguard-tools iproute2 nano socat jq bash
+# Install WireGuard and utilities (bash + jq + bashio are provided by the base)
+RUN apk add --no-cache wireguard-tools iproute2 socat
 
-COPY run.sh /run.sh
-RUN chmod a+x /run.sh
+# Copy the s6-overlay service definitions and scripts
+COPY rootfs /
 
-CMD ["/run.sh"]
+# Ensure the s6 service scripts are executable (Windows checkouts may drop +x)
+RUN chmod a+x \
+    /etc/s6-overlay/s6-rc.d/init-wireguard/run \
+    /etc/s6-overlay/s6-rc.d/wireguard/run \
+    /etc/s6-overlay/s6-rc.d/wireguard/finish \
+    /etc/s6-overlay/s6-rc.d/socat/run
+
+# No CMD: the base image's /init (s6-overlay) starts the services above.
