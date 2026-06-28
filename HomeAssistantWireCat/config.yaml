@@ -1,6 +1,6 @@
 name: "WireGuard Gateway"
 description: "WireGuard VPN client with configurable Socat port-forwarding tunnels"
-version: "1.1.1"
+version: "1.1.2"
 slug: "wireguard_gateway"
 init: false
 arch:

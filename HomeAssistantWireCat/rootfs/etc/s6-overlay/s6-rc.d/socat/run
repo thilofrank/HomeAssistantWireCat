@@ -12,8 +12,8 @@ run_tunnel() {
     while true; do
         bashio::log.info "Tunnel ${port} -> ${target} starting"
         socat "TCP-LISTEN:${port},reuseaddr,fork" "TCP:${target}" || true
-        bashio::log.warning "Tunnel ${port} exited — restarting in 2s"
-        sleep 2
+        bashio::log.warning "Tunnel ${port} exited — restarting in 120s"
+        sleep 120
     done
 }
 
